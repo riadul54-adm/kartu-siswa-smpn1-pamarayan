@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cetak Kartu Siswa</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* CARD ATM SIZE */
+        .card-atm {
+            width: 85.6mm;
+            height: 53.98mm;
+            background: white;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        /* CARD HEADER */
+        .card-header {
+            background: linear-gradient(90deg, #1a237e 0%, #283593 100%);
+            height: 14mm;
+            padding: 2mm 3mm;
+            color: white;
+        }
+        
+        .school-name {
+            font-size: 3.8mm;
+            font-weight: 800;
+            margin: 0;
+            line-height: 1.1;
+        }
+        
+        .school-address {
+            font-size: 2mm;
+            opacity: 0.9;
+            margin-top: 0.5mm;
+        }
+        
+        .logo-badge {
+            position: absolute;
+            right: 3mm;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 10mm;
+            height: 10mm;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-badge div {
+            color: #1a237e;
+            font-weight: bold;
+            font-size: 2.8mm;
+        }
+        
+        /* CARD CONTENT */
+        .card-content {
+            display: flex;
+            padding: 2mm;
+            height: calc(100% - 14mm);
+        }
+        
+        /* LEFT PANEL */
+        .left-panel {
+            width: 28mm;
+            border-right: 1px dashed #e0e0e0;
+            padding-right: 2mm;
+            display: flex;
+            flex-direction: column;
+            gap: 2mm;
+        }
+        
+        .photo-frame {
+            width: 25mm;
+            height: 30mm;
+            border: 2px solid #1a237e;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+        
+        .photo-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .photo-label {
+            text-align: center;
+            font-size: 2mm;
+            font-weight: bold;
+            color: #1a237e;
+            margin-top: 0.5mm;
+        }
+        
+        .qrcode-container {
+            text-align: center;
+        }
+        
+        .qrcode-box {
+            width: 20mm;
+            height: 20mm;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 1mm;
+            background: white;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .qrcode-label {
+            font-size: 1.8mm;
+            color: #666;
+            margin-top: 0.5mm;
+        }
+        
+        /* RIGHT PANEL */
+        .right-panel {
+            flex: 1;
+            padding-left: 2mm;
+            padding-top: 1mm;
+        }
+        
+        .data-table {
+            font-size: 2.8mm;
+            height: 100%;
+        }
+        
+        .data-row {
+            margin-bottom: 1.2mm;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .data-label {
+            width: 18mm;
+            font-weight: 600;
+            color: #1a237e;
+            flex-shrink: 0;
+        }
+        
+        .data-value {
+            color: #333;
+        }
+        
+        /* FOOTER */
+        .card-footer {
+            margin-top: 2mm;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 1.5mm;
+            position: relative;
+        }
+        
+        .signature-area {
+            position: relative;
+            min-height: 16mm;
+        }
+        
+        .signature-line {
+            width: 35mm;
+            border-top: 1px solid #333;
+            margin-top: 8mm;
+        }
+        
+        .ttd-image {
+            position: absolute;
+            left: 0;
+            top: -5mm;
+            height: 12mm;
+            z-index: 2;
+        }
+        
+        .stempel-image {
+            position: absolute;
+            left: 12mm;
+            top: -3mm;
+            height: 10mm;
+            z-index: 3;
+            opacity: 0.9;
+        }
+        
+        .kepsek-info {
+            margin-top: 0.8mm;
+            font-size: 2mm;
+            line-height: 1.3;
+        }
+        
+        .kepsek-name {
+            font-weight: bold;
+            color: #1a237e;
+            display: block;
+        }
+        
+        .kepsek-nip {
+            color: #666;
+            font-size: 1.8mm;
+        }
+        
+        .card-type {
+            position: absolute;
+            bottom: 1mm;
+            right: 0;
+            font-size: 2mm;
+            color: #666;
+            font-style: italic;
+        }
+        
+        /* LOADING OVERLAY */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            flex-direction: column;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <h3>Membuat Kartu...</h3>
+        <p>Harap tunggu sebentar</p>
+    </div>
+    
+    <!-- Card Template -->
+    <div id="cardTemplate" class="card-atm" style="display: none;">
+        <!-- Header -->
+        <div class="card-header">
+            <h3 class="school-name">SMP NEGERI 1 PAMARAYAN</h3>
+            <p class="school-address">Jl. Blok Pekalongan, Pamarayan, Serang - Banten 42176</p>
+            <div class="logo-badge">
+                <div>SMPN1</div>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="card-content">
+            <!-- Left Panel -->
+            <div class="left-panel">
+                <!-- Photo -->
+                <div class="photo-container">
+                    <div class="photo-frame">
+                        <img id="cardPhoto" src="" alt="Foto Siswa">
+                    </div>
+                    <div class="photo-label">FOTO SISWA</div>
+                </div>
+                
+                <!-- QR Code -->
+                <div class="qrcode-container">
+                    <div class="qrcode-box" id="cardQRCode"></div>
+                    <div class="qrcode-label">SCAN UNTUK VALIDASI</div>
+                </div>
+            </div>
+            
+            <!-- Right Panel -->
+            <div class="right-panel">
+                <!-- Student Data -->
+                <div class="data-table">
+                    <div class="data-row">
+                        <div class="data-label">NISN</div>
+                        <div class="data-value" id="cardNISN">-</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">NAMA</div>
+                        <div class="data-value" id="cardNama">-</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">TTL</div>
+                        <div class="data-value" id="cardTTL">-</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">ALAMAT</div>
+                        <div class="data-value" id="cardAlamat">-</div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div class="card-footer">
+                    <div class="signature-area">
+                        <!-- TTD -->
+                        <img id="cardTTD" src="" alt="TTD" class="ttd-image">
+                        
+                        <!-- Stempel -->
+                        <img id="cardStempel" src="" alt="Stempel" class="stempel-image">
+                        
+                        <!-- Line -->
+                        <div class="signature-line"></div>
+                        
+                        <!-- Kepsek Info -->
+                        <div class="kepsek-info">
+                            <span class="kepsek-name" id="cardKepsekName">-</span>
+                            <div class="kepsek-nip">NIP. <span id="cardKepsekNIP">-</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-type">KARTU PELAJAR</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/cetak.js"></script>
+</body>
+</html>
